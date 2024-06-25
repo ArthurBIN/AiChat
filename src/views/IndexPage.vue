@@ -1,0 +1,512 @@
+<template>
+
+  <div class="All">
+
+<!--    问候语-->
+    <div class="greetings">{{greeting}}</div>
+<!--    标签转化页-->
+    <div class="ContentBox">
+
+<!--      顶部标签-->
+      <div class="tabs">
+        <div @click="slideTo(1)" :class="{ active: currentSlide === 1 }">访谈室</div>
+        <div @click="slideTo(2)" :class="{ active: currentSlide === 2 }">编辑部</div>
+        <div @click="slideTo(3)" :class="{ active: currentSlide === 3 }">藏卷馆</div>
+      </div>
+
+      <div class="swiper-container" ref="swiperContainer">
+
+        <div class="swiper-wrapper">
+
+<!--          访谈室-->
+          <div class="swiper-slide">
+
+            <div v-for="(item, index) in TalkBoxBgi"
+                 :key="index"
+                 :style="{
+                   backgroundImage: `url(${item.bgi})`,
+                   margin: index > 2 ? '3vw 0 0 3.33%' : '0 0 0 3.33%'}"
+                 class="talkBoxItem"
+                 @touchmove="handleMove"
+                 @touchstart="pressButton(index)"
+                 @touchend="releaseButton(item.text)"
+                 onselectstart="return false;"
+                 :class="[
+                    ((index + 1) % 4 === 1 || (index + 1) % 4 === 0) ? 'talkBoxItemLeft' : 'talkBoxItemRight',
+                    index === activeIndex && isPressed ? 'small' : ''
+                 ]" >
+              <div class="talkBoxItem_Text">{{item.text}}</div>
+            </div>
+
+          </div>
+
+<!--          编辑部-->
+          <div class="swiper-slide">
+<!--            <van-pull-refresh class="pullRefresh" v-model="isLoading" @refresh="onRefresh">-->
+
+            <div class="infoItemBox"
+                   v-for="(item, index) in infoLists"
+                   :key="index"
+                   @click="goInfoPage(item)">
+                <div class="infoItemBox_Title">童年印象</div>
+                <div class="infoItemBox_TimeBox">
+                  <div>{{truncatedTime(item.time,0,11)}}</div>
+                  <div>{{truncatedTime(item.time,12,17)}}</div>
+                </div>
+                <div class="infoItemBox_Data">{{item.infoListItem[0].data}}</div>
+                <div class="iconfont icon-tiaozhuan infoItemBox_Icon"></div>
+              </div>
+              <van-empty description="您还没有记录哦~" v-if="infoLists.length === 0"/>
+<!--            </van-pull-refresh>-->
+
+          </div>
+
+<!--          藏卷馆-->
+          <div class="swiper-slide">
+
+            <div class="infoItemBox draftItemBox"
+                 v-for="(item, index) in draftLists"
+                 :key="index">
+              <div class="infoItemBox_Title">{{item.style}}</div>
+              <div class="infoItemBox_TimeBox">
+                <div>{{item.time}}</div>
+              </div>
+              <div class="infoItemBox_Data draftItemBox_Data">{{item.text}}</div>
+
+<!--              藏卷馆草稿按钮-->
+              <div class="draftItemBtnBox">
+                <div class="draftItemBtnBox_Check" @click="ToEditStoryPage(item.chat_id)">查看</div>
+                <div class="draftItemBtnBox_Go">
+                  <i class="iconfont icon-fasong1"></i>
+                </div>
+              </div>
+
+            </div>
+            <van-empty description="您还没有生成故事哦~" v-if="draftLists.length === 0"/>
+
+          </div>
+
+        </div>
+      </div>
+
+
+    </div>
+
+<!--    添加功能按钮-->
+    <div class="AddBox" v-if="currentSlide === 1" @click="addDiv">
+      <i class="iconfont icon-tianjia"></i>
+    </div>
+
+<!--    编辑部清空-->
+    <div class="DelBox" v-if="currentSlide === 2" @click="DelAll">
+      <van-icon name="delete-o" />
+    </div>
+
+<!--    藏卷馆底部按钮-->
+    <div class="AddBox" v-if="currentSlide === 3" @click="ToActivity">
+      <i class="iconfont icon-guangchang1"></i>
+    </div>
+
+  </div>
+
+</template>
+
+<script>
+import Swiper from 'swiper';
+import {Dialog, Toast} from "vant";
+export default {
+  name: "IndexPage",
+  data() {
+    return {
+      greeting: "刘奶奶,早上好!",
+      mySwiper: null,
+      currentSlide: 1, //当前轮播图页数
+      activeIndex: null,
+      isPressed: false,
+      isMove: true,
+      infoLists: [],
+      draftLists: [],
+      isLoading: false,
+      TalkBoxBgi: [
+        {
+          text: "童年印象",
+          bgi: "https://img.zcool.cn/community/0125e15e4fe442a8012165182e7572.jpg@1280w_1l_2o_100sh.jpg"
+        },
+        {
+          text: "儿时玩伴",
+          bgi: "https://img.zcool.cn/community/01c79f5d9f3084a801211d533875a0.jpg@3000w_1l_2o_100sh.jpg"
+        },
+        {
+          text: "家庭记忆",
+          bgi: "https://img.zcool.cn/community/01830862b98eb90002c313f7c9d4a3.jpg?x-oss-process=image/auto-orient,1/resize,m_lfit,w_1280,limit_1/sharpen,100"
+        },
+        {
+          text: "童年印象",
+          bgi: "https://img.zcool.cn/community/0125e15e4fe442a8012165182e7572.jpg@1280w_1l_2o_100sh.jpg"
+        },
+        {
+          text: "儿时玩伴",
+          bgi: "https://img.zcool.cn/community/01c79f5d9f3084a801211d533875a0.jpg@3000w_1l_2o_100sh.jpg"
+        },
+        {
+          text: "家庭记忆",
+          bgi: "https://img.zcool.cn/community/01830862b98eb90002c313f7c9d4a3.jpg?x-oss-process=image/auto-orient,1/resize,m_lfit,w_1280,limit_1/sharpen,100"
+        },
+        {
+          text: "家庭记忆",
+          bgi: "https://img.zcool.cn/community/01da0a5e6db913a801216518b5ee6b.jpg@2o.jpg"
+        }
+      ]
+    }
+  },
+  computed: {
+
+  },
+  created() {
+
+  },
+  mounted() {
+    var that = this;
+    this.mySwiper = new Swiper(this.$refs.swiperContainer, {
+      loop: false, // 循环模式选项
+      on:{
+        slideChange: function () {
+          that.$data.currentSlide = this.realIndex+1  //真实的幻灯片索引
+        },
+      },
+    });
+
+    // 获取缓存中的编辑部信息
+    this.getCachedData();
+
+    // localStorage.removeItem('draftLists');
+
+    // 获取缓存中存储的轮播图页数
+    const currentPage = localStorage.getItem('currentPage');
+
+    if (currentPage) {
+      this.$data.currentSlide = parseInt(currentPage)
+      Toast("当前页数为：" + currentPage);
+      this.mySwiper.slideToLoop(currentPage - 1);
+    }
+  },
+  methods: {
+    // 前往编辑故事页
+    ToEditStoryPage(id) {
+      this.$router.push({
+        path: 'editstory',
+        query: {
+          chat_id: id
+        }
+      })
+    },
+    // 删除所有编辑部的信息
+    DelAll() {
+      Dialog.confirm({
+        message: '确认删除所有记录吗？',
+      })
+          .then(() => {
+            localStorage.removeItem('infoLists');
+            this.getCachedData()
+            Toast.success("删除成功！")
+          })
+          .catch(() => {
+            // on cancel
+          });
+    },
+    // 跳转至活动广场
+    ToActivity() {
+      this.$router.push("/active")
+    },
+
+    // 下拉刷新
+    onRefresh() {
+      setTimeout(() => {
+        Toast('刷新成功');
+        this.isLoading = false;
+        this.count++;
+      }, 1000);
+    },
+
+    addDiv() {
+
+    },
+    // 前往缓冲页
+    goInfoPage(data) {
+      this.$router.push({
+        path: "/datapage",
+        query: {
+          data: data
+        }
+      })
+    },
+
+    // 截取前n个字符（这里是截取日期）
+    truncatedTime(time,n,x) {
+      return time.substring(n, x);
+    },
+
+    // 获取缓存中的数据（获取缓存中的编辑部信息）
+    getCachedData() {
+      // localStorage.removeItem('infoLists');
+
+      // 从 localStorage 获取编辑部的数据
+      const cachedInfoList = localStorage.getItem('infoLists');
+
+      // 检查是否存在缓存数据
+      if (cachedInfoList) {
+        this.infoLists = JSON.parse(cachedInfoList);
+      } else {
+        console.log('没有找到缓存数据');
+        this.infoLists = [];
+      }
+
+      const cachedDraftList = localStorage.getItem('draftLists');
+      if (cachedDraftList) {
+        this.draftLists = JSON.parse(cachedDraftList)
+        console.log(this.draftLists)
+      } else {
+        console.log('未找到藏卷馆信息');
+        this.draftLists = [];
+      }
+
+    },
+
+    // 点击标签进行轮播图的切换
+    slideTo(index) {
+      if (index < 1) {
+        index = 1;
+      } else if (index > 3) {
+        index = 3;
+      }
+      this.mySwiper.slideToLoop(index - 1);
+      this.currentSlide = index;
+    },
+
+
+    pressButton(index) {
+      this.isMove = true
+      this.activeIndex = index;
+      this.isPressed = true;
+    },
+
+    releaseButton(text) {
+      this.isPressed = false;
+      console.log("滑动：" + text)
+      if (this.isMove) {
+        this.$router.push("/home")
+      }
+    },
+    handleMove() {
+      this.isMove = false
+    },
+  },
+
+  // 在页面关闭时把此时的轮播图页数存到缓存中，以便返回该页面时更方便用户查看
+  beforeDestroy() {
+    localStorage.setItem('currentPage', this.$data.currentSlide);
+  }
+}
+</script>
+
+<style scoped>
+.All {
+  width: 100%;
+  overflow: hidden;
+}
+.greetings {
+  width: 100%;
+  height: 23vw;
+  line-height: 23vw;
+  font-size: 6vw;
+  text-align: center;
+  color: #456c49;
+}
+
+/*轮播图*/
+.ContentBox {
+  margin: 0 auto;
+}
+.tabs {
+  display: flex;
+  width: 93%;
+  margin: 0 auto;
+}
+.tabs div {
+  width: 30%;
+  margin-left: 2.5%;
+  text-align: center;
+  height: 12vw;
+  line-height: 12vw;
+  font-size: 5vw;
+  transition: font-size 0.2s ease-out;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.tabs .active {
+  /*border-bottom: 2px solid #000; !* 添加底部边线 *!*/
+  box-sizing: border-box;
+  border-bottom: 4px solid #80A281;
+  font-size: 5.5vw; /* 增加字体大小 */
+}
+.swiper-container {
+  width: 100%;
+  margin-top: 20px;
+}
+.swiper-slide {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 35vw - 80px);
+  overflow-y: scroll;
+  padding-bottom: 20px;
+  box-sizing: border-box;
+}
+.pullRefresh {
+
+}
+.swiper-slide::-webkit-scrollbar {
+  display: none;
+}
+.talkBoxItem {
+  display: inline-block;
+  height: 37vw;
+  border-radius: 15px;
+  background-position: center; /* 背景图片位置设置为中央 */
+  background-repeat: no-repeat; /* 防止背景图片重复 */
+  background-size: cover;
+  position: relative;
+  box-sizing: border-box;
+  transition: transform 0.2s ease-out;
+}
+.talkBoxItemLeft {
+  width: 50%;
+  background-color: #5b5b5b;
+}
+.talkBoxItemRight {
+  background-color: #212121;
+  width: 40%;
+}
+.talkBoxItem_Text {
+  position: absolute;
+  top: 2vw;
+  left: 2.5vw;
+  color: white;
+  font-size: 6vw;
+  font-weight: 700;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/*添加按钮*/
+.AddBox {
+  position: fixed;
+  right: 20px;
+  bottom: 50px;
+  z-index: 99;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 70px;
+  color: #80A281;
+  background-color: #4D7B50;
+  box-shadow: 0 0 10px 3px rgba(0,0,0, .2);
+}
+.DelBox {
+  position: fixed;
+  right: 20px;
+  bottom: 50px;
+  z-index: 99;
+  width: 70px;
+  height: 70px;
+  line-height: 70px;
+  text-align: center;
+  border-radius: 50%;
+  overflow: hidden;
+  font-size: 30px;
+  color: red;
+  background-color: #fff;
+  box-shadow: 0 0 10px 3px rgba(0,0,0, .2);
+}
+.small {
+  transform: scale(0.9) !important;
+}
+
+/*编辑部样式*/
+.infoItemBox {
+  position: relative;
+  width: 94%;
+  margin: 10px auto;
+  background-color: #EEEFE8;
+  padding: 3vw;
+  font-size: 4.5vw;
+  box-sizing: border-box;
+  border-radius: 3.5vw;
+}
+.infoItemBox:nth-child(1) {
+  width: 94%;
+  margin: 0 auto 10px;
+}
+.infoItemBox_TimeBox {
+
+}
+.infoItemBox_Data {
+  margin-top: 3vw;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 90%;
+}
+.infoItemBox_Title {
+  position: absolute;
+  top: 3vw;
+  right: 4vw;
+  color: #839B84;
+  font-weight: 700;
+}
+.infoItemBox_Icon {
+  position: absolute;
+  bottom: 3vw;
+  right: 4vw;
+  color: #839B84;
+  font-size: 7vw;
+}
+
+/*藏卷馆样式*/
+.draftItemBox_Data {
+  width: 100%;
+  -webkit-line-clamp: 4;
+}
+.draftItemBtnBox {
+  width: 70%;
+  height: 11vw;
+  line-height: 11vw;
+  display: flex;
+  margin: 2vw auto 0;
+}
+.draftItemBtnBox_Check {
+  width: 72%;
+  height: 100%;
+  background-color: #BDCC98;
+  border-radius: 10px;
+  text-align: center;
+  color: #1C4511;
+  font-weight: 700;
+}
+.draftItemBtnBox_Go {
+  width: 18%;
+  height: 100%;
+  margin-left: 10%;
+  border-radius: 10px;
+  background-color: #87A184;
+  text-align: center;
+}
+</style>
