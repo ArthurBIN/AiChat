@@ -12,17 +12,17 @@
     </div>
 
 <!--    给故事起名字栏-->
-    <input class="AddTitleBox" placeholder="给这个故事起个名字吧">
+    <input class="AddTitleBox" v-model="title" placeholder="给这个故事起个名字吧">
 
 <!--    故事编辑文本域-->
     <textarea class="EditTextBox" v-model="storyItem.text"></textarea>
 
 <!--    底部按钮栏-->
     <div class="bottomBtnBox">
-      <div class="cancelSave">
+      <div class="cancelSave" @click="cancelSave()">
         放弃修改 <i class="icon-quxiaobaocun iconfont"></i>
       </div>
-      <div class="Save">
+      <div class="Save" @click="Save()">
         保存进度 <i class="icon-baocun iconfont"></i>
       </div>
       <div class="Go">
@@ -41,6 +41,7 @@ export default {
     return {
       storyItem: {},
       draftLists: [],
+      title: ""
     }
   },
   mounted() {
@@ -54,6 +55,16 @@ export default {
     console.log(this.storyItem)
   },
   methods: {
+    // 获取当前日期
+    getCurrentDateTime() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${year}年${month}月${day}日 ${hours}:${minutes}`;
+    },
     // 获取缓存中的draftLists
     getDraftLists() {
       const cachedDraftList = localStorage.getItem('draftLists');
@@ -62,6 +73,27 @@ export default {
       } else {
         this.draftLists = [];
       }
+    },
+    // 取消保存，不进行任何操作，直接返回主页面
+    cancelSave() {
+      this.$router.replace({name: 'index'})
+    },
+    Save() {
+      // 先把之前的给删除
+      const id = this.storyItem.chat_id
+      console.log(id)
+      const index = this.draftLists.findIndex(item => item.chat_id === id);
+      if (index !== -1) {
+        this.draftLists.splice(index, 1);
+      }
+      // 再添加新的
+      this.storyItem.time = this.getCurrentDateTime();
+      this.storyItem.title = this.title
+      console.log(this.storyItem)
+      this.draftLists.push(this.storyItem)
+      localStorage.setItem('draftLists', JSON.stringify(this.draftLists));
+      this.$router.replace({name: 'index'})
+
     }
   }
 }
