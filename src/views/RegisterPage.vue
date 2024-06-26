@@ -1,4 +1,6 @@
 <template>
+<!--  已连接后端api-->
+
   <!--  登录界面-->
   <div class="All">
 
@@ -99,9 +101,17 @@ export default {
 
         myaxios.post("/user/register", info).then(res => {
           if (res.data.code === 0) {
-            console.log(res)
+            const id = res.data.data.user_id
+            localStorage.setItem('user_id', id)
+
+            // 3.显示登录成功
+            Toast("登录成功！");
+
+            // 跳转到首页
+            this.$router.replace({ name: 'index' });
+
             // const token = res.data.token
-            console.log(res.headers['cookie'])
+            // console.log(res.headers['cookie'])
             // localStorage.setItem('token', token);
           }
         }).catch( err => {
@@ -109,14 +119,12 @@ export default {
           Toast.fail("该用户已存在！")
         })
 
-        // 3.显示登录成功
-        // Toast("登录成功！");
+
 
         // 把当前登录状态存储在缓存中
         // localStorage.setItem('isLogin', true);
 
-        // 跳转到首页
-        // this.$router.replace({ name: 'index' });
+
       }
     },
 

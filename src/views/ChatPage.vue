@@ -137,6 +137,7 @@ export default {
   },
 
   mounted() {
+    console.log(this.user_id)
     // localStorage.removeItem('infoLists');
     this.getCachedData();
     console.log(this.infoLists)

@@ -1,4 +1,5 @@
 <template>
+
   <div id="app">
     <!--    顶部栏-->
     <div class="TopBox" v-if="$route.path !== '/active'">
@@ -62,9 +63,11 @@ export default {
     }
   },
   mounted() {
-    const islogin = localStorage.getItem('isLogin');
-    Toast("当前登录状态：" + islogin)
-    if (!islogin) {
+    const id = localStorage.getItem('user_id');
+    if (id) {
+      this.$router.replace({name: 'index'})
+      Toast("您已成功登录！")
+    } else {
       this.$router.replace({name: 'login'})
     }
   },
@@ -83,7 +86,7 @@ export default {
     },
     onSelect(action) {
       if (action.text === '退出登录') {
-        localStorage.removeItem('isLogin');
+        localStorage.removeItem('user_id');
         Toast("退出登录成功！")
         this.$router.replace({name: 'login'});
       }

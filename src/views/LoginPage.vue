@@ -1,4 +1,6 @@
 <template>
+<!--  已连接后端api  -->
+
 <!--  登录界面-->
   <div class="All">
 
@@ -46,6 +48,7 @@
 
 <script>
 import {Toast} from "vant";
+import myaxios from "@/config/myaxios";
 
 export default {
   name: "LoginPage",
@@ -58,25 +61,13 @@ export default {
     }
   },
   mounted() {
-    this.getUserList();
+
   },
   beforeCreate() {
-    const islogin = localStorage.getItem('isLogin');
-    console.log( '当前登录状态：' + islogin)
-    if (islogin === true) {
-      this.$router.replace({name: 'index'})
-    }
+
   },
   methods: {
-    // 获取缓存中的所有用户名和密码
-    getUserList() {
-      const userlist = localStorage.getItem('userList');
-      if (userlist) {
-        this.userList = JSON.parse(userlist);
-      } else {
-        console.log('没有找到缓存数据');
-      }
-    },
+
     pressButton() {
       this.isPressed = true
     },
@@ -89,16 +80,23 @@ export default {
       if (!this.username || !this.password) {
         Toast("请将信息填写完整！")
       } else {
-        const user = this.userList.find(
-            user => user.username === this.username && user.password === this.password
-        );
-        if (user) {
-          Toast("登录成功！")
-          localStorage.setItem('isLogin', true);
-          this.$router.replace({name: 'index'})
-        } else {
-          Toast("账号或密码错误！")
+        const info = {
+          username: this.username,
+          password: this.password
         }
+        myaxios.post("/user/login",info).then(res => {
+          if (res.data.code === 0) {
+            const id = res.data.data.userInfo.user_id
+            localStorage.setItem('user_id', id)
+
+            const token = res.data.data.token
+            localStorage.setItem('token', token)
+
+            Toast("登录成功！");
+            // 跳转到首页
+            this.$router.replace({ name: 'index' });
+          }
+        })
       }
 
     },
