@@ -450,7 +450,7 @@ export default {
   margin: 10px auto 0;
 }
 .popupBox_InfoItem_Title {
-  width: 65%;
+  width: 55%;
   color: #80A281;
   font-weight: 700;
 }
@@ -481,7 +481,7 @@ export default {
 }
 .popupBox_InfoItem_Time {
   text-align: right;
-  width: 30%;
+  width: 40%;
   height: 30px;
   line-height: 30px;
   font-size: 14px;
