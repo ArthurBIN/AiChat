@@ -16,9 +16,12 @@
            class="topIcon iconfont icon-fanhui"
            @click="goRegister()"></div>
 
+<!--      返回前一页 （故事编辑页）-->
       <div v-if="$route.path === '/editstory'"
            class="topIcon iconfont icon-fanhui"
            @click="goBack()"></div>
+
+
 
 <!--      中心标题-->
       <div class="TitleBox">{{$route.meta.title}}</div>
@@ -31,13 +34,12 @@
           @select="onSelect"
           placement="bottom-end"
           class="topIcon_right"
-          v-if="$route.path !== '/login' && $route.path !== '/register' "
+          v-if="$route.path !== '/login' && $route.path !== '/register' && $route.path !== '/home'"
       >
         <template #reference>
           <div class="iconfont icon-geren"></div>
         </template>
       </van-popover>
-
 
     </div>
 
@@ -106,7 +108,7 @@ body {
   line-height: 60px;
   position: fixed;
   background-color: #80A281;
-  z-index: 999;
+  z-index: 99;
 }
 .TitleBox {
   font-size: 24px;

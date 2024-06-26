@@ -1,6 +1,30 @@
 <template>
   <div class="All">
 
+    <div class="topIconChat">
+      <van-icon name="ellipsis" @click="showPopup" />
+    </div>
+
+    <!--      弹出层-->
+    <van-popup v-model="show"
+               round
+               position="bottom"
+               closeable
+               :style="{ height: '60%' }"
+               class="popupBox">
+      <div class="popupBox_Title">聊天记录</div>
+      <div class="popupBox_InfoBox">
+        <div class="popupBox_InfoItem" v-for="(item, index) in infoLists" :key="index" @click="GoDataPage(item._id)">
+          <div class="popupBox_InfoItem_FirstLine">
+            <div class="popupBox_InfoItem_Title">童年印象</div>
+            <div class="popupBox_InfoItem_Time">{{truncatedTime(item.time,0,11)}}</div>
+          </div>
+          <div class="popupBox_InfoItem_Text popupBox_InfoItem_inText">{{item.infoListItem[0].data}}</div>
+          <div class="popupBox_InfoItem_Text">{{item.infoListItem[1].data}}</div>
+        </div>
+      </div>
+    </van-popup>
+
     <!--    背景图片-->
     <div class="bgiBox">
       <img src="../images/bgc1.png" alt="">
@@ -108,12 +132,14 @@ export default {
       isLoading: false,
       newText: "",  //机器返回的语言
       isPull: false,  //检测是否下拉刷新
+      show: false,
     }
   },
 
   mounted() {
     // localStorage.removeItem('infoLists');
     this.getCachedData();
+    console.log(this.infoLists)
 
     // 滑倒页面最底端
     this.scrollToBottom();
@@ -127,6 +153,21 @@ export default {
   },
 
   methods: {
+    GoDataPage(id) {
+      this.$router.push({
+        path: "/datapage",
+        query: {
+          id: id
+        }
+      })
+    },
+    // 截取前n个字符（这里是截取日期）
+    truncatedTime(time,n,x) {
+      return time.substring(n, x);
+    },
+    showPopup() {
+      this.show = true;
+    },
     onRefresh() {
       setTimeout(() => {
         Toast('刷新成功');
@@ -371,7 +412,86 @@ export default {
 
 .All {
   box-sizing: border-box;
+  position: relative;
 }
+.topIconChat {
+  height: 60px;
+  line-height: 60px;
+  position: fixed;
+  top: 0;
+  right: 30px;
+  z-index: 99;
+  font-size: 28px;
+  color: white;
+}
+.popupBox {
+
+}
+.popupBox_Title {
+  width: 100%;
+  height: 60px;
+  text-align: center;
+  line-height: 60px;
+  font-size: 25px;
+  font-weight: 700;
+}
+.popupBox_InfoBox {
+  width: 100%;
+  height: calc(100% - 60px);
+  overflow-y: scroll;
+  padding-bottom: 20px;
+  box-sizing: border-box;
+}
+.popupBox_InfoItem {
+  width: 93%;
+  border-radius: 15px;
+  background-color: #f8f8f8;
+  padding: 5px 0 15px 0;
+  margin: 10px auto 0;
+}
+.popupBox_InfoItem_Title {
+  width: 65%;
+  color: #80A281;
+  font-weight: 700;
+}
+.popupBox_InfoItem_Text {
+  width: 95%;
+  font-size: 18px;
+  box-sizing: border-box;
+  margin: 10px auto 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #737373;
+}
+.popupBox_InfoItem_FirstLine {
+  width: 95%;
+  font-size: 20px;
+  height: 30px;
+  line-height: 30px;
+  box-sizing: border-box;
+  display: flex;
+  margin: 10px auto 0;
+}
+.popupBox_InfoItem_inText {
+  font-weight: 700;
+  color: #000;
+}
+.popupBox_InfoItem_Time {
+  text-align: right;
+  width: 30%;
+  height: 30px;
+  line-height: 30px;
+  font-size: 14px;
+  box-sizing: border-box;
+  color: #b2b2b2;
+  margin-left: 3%;
+  margin-right: 2%;
+}
+
+
 .bgiBox {
   width: 100%;
   height: 100vh;

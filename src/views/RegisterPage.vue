@@ -16,10 +16,10 @@
         <input type="password" v-model="password"/>
       </div>
 
-      <!--      激活码框-->
+      <!--      手机号框-->
       <div class="pW_Box input_ItemBox">
-        <div class="input_ItemBox_text">激活码</div>
-        <input type="text" v-model="activation"/>
+        <div class="input_ItemBox_text">*手机号</div>
+        <input type="text" v-model="mobile"/>
       </div>
 
       <!--      登录按钮-->
@@ -49,7 +49,7 @@ export default {
       isPressed: false,
       username: "",
       password: "",
-      activation: "",
+      mobile: "",
       userList: []
     }
   },
@@ -74,7 +74,7 @@ export default {
       this.isPressed = false
 
       // 判断输入框中是否有数据
-      if (!this.username || !this.password) {
+      if (!this.username || !this.password || !this.mobile) {
         Toast("信息未填写完整")
       } else {
 
@@ -84,10 +84,18 @@ export default {
         // 2.把新增的用户信息添加到该集合中
         const info = {
           username: this.username,
-          password: this.password
+          password: this.password,
+          mobile: this.mobile
         }
         this.userList.push(info);
         localStorage.setItem('userList', JSON.stringify(this.userList));
+
+        // axios.post("http://192.168.4.1:5010/user/register", info).then(res => {
+        //   console.log(res)
+        // }).catch( err => {
+        //   console.log(err)
+        //   Toast.fail("该用户已存在！")
+        // })
 
         // 3.显示登录成功
         Toast("登录成功！");

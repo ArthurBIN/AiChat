@@ -5,8 +5,8 @@
 <!--    时间栏-->
     <div class="TimeBox">
       <div class="Time">
-        <div>{{truncatedTime(timeData,0,11)}}</div>
-        <div>{{truncatedTime(timeData,12,17)}}</div>
+        <div>{{truncatedTime(dataList.time,0,11)}}</div>
+        <div>{{truncatedTime(dataList.time,12,17)}}</div>
       </div>
       <div class="Title">童年印象</div>
     </div>
@@ -85,9 +85,12 @@ export default {
     }
   },
   mounted() {
-    this.dataList = this.$route.query.data
-    this.$data.timeData = this.$route.query.data.time
     this.getCachedData();
+    const id = parseInt(this.$route.query.id)
+    if (id) {
+      this.dataList = this.infoLists.find(item => item._id === id);
+    }
+    // this.$data.timeData = this.$route.query.data.time
   },
   methods: {
     getCachedData() {

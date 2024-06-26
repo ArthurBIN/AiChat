@@ -12,7 +12,7 @@
     </div>
 
 <!--    给故事起名字栏-->
-    <input class="AddTitleBox" v-model="title" placeholder="给这个故事起个名字吧">
+    <input class="AddTitleBox" v-model="storyItem.title" placeholder="给这个故事起个名字吧">
 
 <!--    故事编辑文本域-->
     <textarea class="EditTextBox" v-model="storyItem.text"></textarea>
@@ -41,7 +41,6 @@ export default {
     return {
       storyItem: {},
       draftLists: [],
-      title: ""
     }
   },
   mounted() {
@@ -88,7 +87,6 @@ export default {
       }
       // 再添加新的
       this.storyItem.time = this.getCurrentDateTime();
-      this.storyItem.title = this.title
       console.log(this.storyItem)
       this.draftLists.push(this.storyItem)
       localStorage.setItem('draftLists', JSON.stringify(this.draftLists));

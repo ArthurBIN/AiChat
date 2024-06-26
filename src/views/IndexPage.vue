@@ -47,7 +47,7 @@
             <div class="infoItemBox"
                    v-for="(item, index) in infoLists"
                    :key="index"
-                   @click="goInfoPage(item)">
+                   @click="goInfoPage(item._id)">
                 <div class="infoItemBox_Title">童年印象</div>
                 <div class="infoItemBox_TimeBox">
                   <div>{{truncatedTime(item.time,0,11)}}</div>
@@ -67,7 +67,8 @@
             <div class="infoItemBox draftItemBox"
                  v-for="(item, index) in draftLists"
                  :key="index">
-              <div class="infoItemBox_Title">{{item.style}}</div>
+              <div class="infoItemBox_Title" v-if="!item.title">{{item.style}}</div>
+              <div class="infoItemBox_Title">{{item.title}}</div>
               <div class="infoItemBox_TimeBox">
                 <div>{{item.time}}</div>
               </div>
@@ -232,11 +233,11 @@ export default {
 
     },
     // 前往缓冲页
-    goInfoPage(data) {
+    goInfoPage(id) {
       this.$router.push({
         path: "/datapage",
         query: {
-          data: data
+          id: id
         }
       })
     },
