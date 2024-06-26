@@ -2,6 +2,11 @@
 <!--  登录界面-->
   <div class="All">
 
+    <!--    背景图片-->
+    <div class="bgiBox">
+      <img src="../images/bgc1.png" alt="">
+    </div>
+
     <div class="inputBox">
 
 <!--      用户名框-->
@@ -112,7 +117,21 @@ export default {
   height: calc(100vh - 60px);
   display: flex;
   align-items: center;
-  background-image: url('http://123.57.186.64:9000/img/5cba7dfa-e255-4cc5-9e40-9eac1e38afe8_bgc1.png');
+}
+.bgiBox {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center; /* 水平方向居中 */
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -999;
+}
+.bgiBox img {
+  width: 100%;
+  height: 100%;
 }
 .inputBox {
   width: 80%;

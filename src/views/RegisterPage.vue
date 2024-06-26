@@ -2,6 +2,11 @@
   <!--  登录界面-->
   <div class="All">
 
+    <!--    背景图片-->
+    <div class="bgiBox">
+      <img src="../images/bgc1.png" alt="">
+    </div>
+
     <div class="inputBox">
 
       <!--      用户名框-->
@@ -15,6 +20,7 @@
         <div class="input_ItemBox_text">*密码</div>
         <input type="password" v-model="password"/>
       </div>
+
 
       <!--      手机号框-->
       <div class="pW_Box input_ItemBox">
@@ -41,6 +47,7 @@
 
 <script>
 import {Toast} from "vant";
+import myaxios from "@/config/myaxios";
 
 export default {
   name: "RegisterPage",
@@ -87,24 +94,29 @@ export default {
           password: this.password,
           mobile: this.mobile
         }
-        this.userList.push(info);
-        localStorage.setItem('userList', JSON.stringify(this.userList));
+        // this.userList.push(info);
+        // localStorage.setItem('userList', JSON.stringify(this.userList));
 
-        // axios.post("http://192.168.4.1:5010/user/register", info).then(res => {
-        //   console.log(res)
-        // }).catch( err => {
-        //   console.log(err)
-        //   Toast.fail("该用户已存在！")
-        // })
+        myaxios.post("/user/register", info).then(res => {
+          if (res.data.code === 0) {
+            console.log(res)
+            // const token = res.data.token
+            console.log(res.headers['cookie'])
+            // localStorage.setItem('token', token);
+          }
+        }).catch( err => {
+          console.log(err)
+          Toast.fail("该用户已存在！")
+        })
 
         // 3.显示登录成功
-        Toast("登录成功！");
+        // Toast("登录成功！");
 
         // 把当前登录状态存储在缓存中
-        localStorage.setItem('isLogin', true);
+        // localStorage.setItem('isLogin', true);
 
         // 跳转到首页
-        this.$router.replace({ name: 'index' });
+        // this.$router.replace({ name: 'index' });
       }
     },
 
@@ -127,8 +139,23 @@ export default {
   height: calc(100vh - 60px);
   display: flex;
   align-items: center;
-  background-image: url('http://123.57.186.64:9000/img/5cba7dfa-e255-4cc5-9e40-9eac1e38afe8_bgc1.png');
 }
+.bgiBox {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center; /* 水平方向居中 */
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -999;
+}
+.bgiBox img {
+  width: 100%;
+  height: 100%;
+}
+
 .inputBox {
   width: 80%;
   /*height: 400px;*/
