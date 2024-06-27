@@ -18,7 +18,7 @@
            @click="goRegister()"></div>
 
 <!--      返回前一页 （故事编辑页）-->
-      <div v-if="$route.path === '/editstory'"
+      <div v-if="$route.path === '/editstory' || $route.path === '/login'"
            class="topIcon iconfont icon-fanhui"
            @click="goBack()"></div>
 
@@ -26,21 +26,6 @@
 
 <!--      中心标题-->
       <div class="TitleBox">{{$route.meta.title}}</div>
-
-<!--      最右侧个人头像-->
-      <van-popover
-          v-model="showPopover"
-          trigger="click"
-          :actions="actions"
-          @select="onSelect"
-          placement="bottom-end"
-          class="topIcon_right"
-          v-if="$route.path !== '/login' && $route.path !== '/register' && $route.path !== '/home'"
-      >
-        <template #reference>
-          <div class="iconfont icon-geren"></div>
-        </template>
-      </van-popover>
 
     </div>
 
@@ -57,18 +42,15 @@ export default {
   name: "app",
   data() {
     return {
-      showPopover: false,
-      // 通过 actions 属性来定义菜单选项
-      actions: [{ text: '个人信息' },{ text: '退出登录' }],
+
     }
   },
   mounted() {
     const id = localStorage.getItem('user_id');
     if (id) {
-      this.$router.replace({name: 'index'})
-      Toast("您已成功登录！")
+      Toast("用户已登录")
     } else {
-      this.$router.replace({name: 'login'})
+      Toast("用户未登录")
     }
   },
   components: {
@@ -84,13 +66,7 @@ export default {
     goRegister() {
       this.$router.replace({name: 'login'});
     },
-    onSelect(action) {
-      if (action.text === '退出登录') {
-        localStorage.removeItem('user_id');
-        Toast("退出登录成功！")
-        this.$router.replace({name: 'login'});
-      }
-    },
+
   }
 };
 

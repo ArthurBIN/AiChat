@@ -138,7 +138,7 @@ export default {
     releaseButton() {
       this.isPressed = false;
       this.$router.replace({
-        path: "/home",
+        path: "/chat",
         query: {
           id: this.dataList._id
         }
@@ -193,10 +193,11 @@ export default {
 }
 .DataItemBox {
   width: 100%;
+  font-size: 4.5vw;
 }
 .DataItem1 {
   max-width: 70%;
-  padding: 10px 15px;
+  padding: 2vw 3vw;
   border-radius: 25px;
   margin: 10px 0;
   background-color: #CAD5AC;
@@ -206,7 +207,7 @@ export default {
 }
 .DataItem2 {
   max-width: 70%;
-  padding: 10px 15px;
+  padding: 2vw 3vw;
   border-radius: 25px;
   margin: 10px 0;
   word-wrap: break-word;

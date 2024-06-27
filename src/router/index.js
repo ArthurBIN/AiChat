@@ -30,8 +30,8 @@ const routes = [
     }
   },
   {
-    path: '/home',
-    name: 'home',
+    path: '/chat',
+    name: 'chat',
     component: ChatPage,
     meta: {
       title: '时光之语                                                           '

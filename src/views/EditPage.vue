@@ -192,7 +192,7 @@ export default {
 }
 .DialogBox {
   width: 100%;
-  height: 400px;
+  height: 40vh;
   margin-top: 30px;
   border-radius: 15px;
   background-color: #fff;
@@ -240,7 +240,7 @@ export default {
 }
 .DraftBox {
   width: 100%;
-  height: 400px;
+  height: 40vh;
   margin-top: 20px;
   border-radius: 15px;
   overflow: hidden;

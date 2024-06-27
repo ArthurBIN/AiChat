@@ -59,18 +59,10 @@ export default {
       username: "",
       password: "",
       mobile: "",
-      userList: []
-    }
-  },
-  beforeCreate() {
-    const islogin = localStorage.getItem('isLogin');
-    console.log( '当前登录状态：' + islogin)
-    if (islogin === true) {
-      this.$router.replace({name: 'index'})
     }
   },
   mounted() {
-    this.getUserInfo()
+
   },
   methods: {
     pressButton() {
@@ -87,17 +79,11 @@ export default {
         Toast("信息未填写完整")
       } else {
 
-        // 1.先获取所有用户信息
-        this.getUserInfo();
-
-        // 2.把新增的用户信息添加到该集合中
         const info = {
           username: this.username,
           password: this.password,
           mobile: this.mobile
         }
-        // this.userList.push(info);
-        // localStorage.setItem('userList', JSON.stringify(this.userList));
 
         myaxios.post("/user/register", info).then(res => {
           if (res.data.code === 0) {
@@ -118,23 +104,6 @@ export default {
           console.log(err)
           Toast.fail("该用户已存在！")
         })
-
-
-
-        // 把当前登录状态存储在缓存中
-        // localStorage.setItem('isLogin', true);
-
-
-      }
-    },
-
-    // 获取缓存中所有用户的用户名和密码
-    getUserInfo() {
-      const userInfoList = localStorage.getItem('userList');
-      if (userInfoList) {
-        this.userList = JSON.parse(userInfoList);
-      } else {
-        console.log("没有找到缓存数据")
       }
     },
   }

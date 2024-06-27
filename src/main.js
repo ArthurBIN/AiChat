@@ -22,19 +22,16 @@ Vue.config.productionTip = false
 //   }
 // });
 
-Vue.mixin({
-  data() {
-    return {
-      user_id: ""
-    };
-  },
-  created() {
-    const id = localStorage.getItem('user_id');
-    if (id) {
-      this.user_id = id
-    }
-  }
-});
+// Vue.mixin({
+//   data() {
+//     return {
+//       user_id: ""
+//     };
+//   },
+//   mounted() {
+//     console.log(this.user_id)
+//   }
+// });
 
 new Vue({
   router,

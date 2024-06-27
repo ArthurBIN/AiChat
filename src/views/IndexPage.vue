@@ -2,6 +2,21 @@
 
   <div class="All">
 
+    <!--      最右侧个人头像-->
+    <van-popover
+        v-model="showPopover"
+        trigger="click"
+        :actions="actions"
+        @select="onSelect"
+        placement="bottom-end"
+        class="topIconChat"
+        v-if="user_id"
+    >
+      <template #reference>
+        <div class="iconfont icon-geren"></div>
+      </template>
+    </van-popover>
+
 <!--    问候语-->
     <div class="greetings">{{greeting}}</div>
 <!--    标签转化页-->
@@ -119,6 +134,11 @@ export default {
   name: "IndexPage",
   data() {
     return {
+      user_id: "",
+      showPopover: false,
+      // 通过 actions 属性来定义菜单选项
+      // actions: [{ text: '个人信息' },{ text: '退出登录' }],
+      actions: [{ text: '退出登录' }],
       greeting: "刘奶奶,早上好!",
       mySwiper: null,
       currentSlide: 1, //当前轮播图页数
@@ -167,6 +187,18 @@ export default {
 
   },
   mounted() {
+
+    // 获取用户id
+    const id = localStorage.getItem('user_id');
+    if (id) {
+      this.user_id = id
+      // 获取缓存中的编辑部信息
+      this.getCachedData();
+    } else {
+      this.user_id = ""
+    }
+    console.log(this.user_id)
+
     var that = this;
     this.mySwiper = new Swiper(this.$refs.swiperContainer, {
       loop: false, // 循环模式选项
@@ -177,21 +209,24 @@ export default {
       },
     });
 
-    // 获取缓存中的编辑部信息
-    this.getCachedData();
-
-    // localStorage.removeItem('draftLists');
-
     // 获取缓存中存储的轮播图页数
     const currentPage = localStorage.getItem('currentPage');
 
     if (currentPage) {
       this.$data.currentSlide = parseInt(currentPage)
-      Toast("当前页数为：" + currentPage);
       this.mySwiper.slideToLoop(currentPage - 1);
     }
   },
   methods: {
+
+    // 点击右上角的个人头像
+    onSelect(action) {
+      if (action.text === '退出登录') {
+        localStorage.removeItem('user_id');
+        Toast("退出登录成功！")
+        this.$router.push("/login");
+      }
+    },
     // 前往编辑故事页
     ToEditStoryPage(id) {
       this.$router.push({
@@ -258,16 +293,13 @@ export default {
       if (cachedInfoList) {
         this.infoLists = JSON.parse(cachedInfoList);
       } else {
-        console.log('没有找到缓存数据');
         this.infoLists = [];
       }
 
       const cachedDraftList = localStorage.getItem('draftLists');
       if (cachedDraftList) {
         this.draftLists = JSON.parse(cachedDraftList)
-        console.log(this.draftLists)
       } else {
-        console.log('未找到藏卷馆信息');
         this.draftLists = [];
       }
 
@@ -293,9 +325,22 @@ export default {
 
     releaseButton(text) {
       this.isPressed = false;
-      console.log("滑动：" + text)
       if (this.isMove) {
-        this.$router.push("/home")
+
+        // 松开后检测用户是否登录，若未登录先前往登录页，否则无法使用对话功能
+        if (this.user_id) {
+          this.$router.push("/chat?style=" + text)
+        } else {
+          Dialog.confirm({
+            message: '您还未登录，是否先去登录？',
+          })
+              .then(() => {
+                this.$router.push("/login")
+              })
+              .catch(() => {
+                // on cancel
+              });
+        }
       }
     },
     handleMove() {
@@ -314,6 +359,17 @@ export default {
 .All {
   width: 100%;
   overflow: hidden;
+  position: relative;
+}
+.topIconChat {
+  height: 60px;
+  line-height: 60px;
+  position: fixed;
+  top: 0;
+  right: 30px;
+  z-index: 99;
+  font-size: 28px;
+  color: white;
 }
 .greetings {
   width: 100%;
