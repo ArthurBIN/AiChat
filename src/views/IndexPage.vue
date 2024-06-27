@@ -109,19 +109,19 @@
     </div>
 
 <!--    添加功能按钮-->
-    <div class="AddBox" v-if="currentSlide === 1" @click="addDiv">
-      <i class="iconfont icon-tianjia"></i>
-    </div>
+<!--    <div class="AddBox" v-if="currentSlide === 1" @click="addDiv">-->
+<!--      <i class="iconfont icon-tianjia"></i>-->
+<!--    </div>-->
 
 <!--    编辑部清空-->
-    <div class="DelBox" v-if="currentSlide === 2" @click="DelAll">
-      <van-icon name="delete-o" />
-    </div>
+<!--    <div class="DelBox" v-if="currentSlide === 2" @click="DelAll">-->
+<!--      <van-icon name="delete-o" />-->
+<!--    </div>-->
 
 <!--    藏卷馆底部按钮-->
-    <div class="AddBox" v-if="currentSlide === 3" @click="ToActivity">
-      <i class="iconfont icon-guangchang1"></i>
-    </div>
+<!--    <div class="AddBox" v-if="currentSlide === 3" @click="ToActivity">-->
+<!--      <i class="iconfont icon-guangchang1"></i>-->
+<!--    </div>-->
 
   </div>
 
@@ -180,11 +180,10 @@ export default {
       ]
     }
   },
-  computed: {
-
-  },
-  created() {
-
+  watch: {
+    currentSlide() {
+      localStorage.setItem('currentPage', this.$data.currentSlide);
+    },
   },
   mounted() {
 
@@ -348,10 +347,6 @@ export default {
     },
   },
 
-  // 在页面关闭时把此时的轮播图页数存到缓存中，以便返回该页面时更方便用户查看
-  beforeDestroy() {
-    localStorage.setItem('currentPage', this.$data.currentSlide);
-  }
 }
 </script>
 
