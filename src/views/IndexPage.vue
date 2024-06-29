@@ -1,7 +1,6 @@
 <template>
 <!--测试-->
   <div class="All">
-<!--    做个测试-->
 
     <!--      最右侧个人头像-->
     <van-popover
