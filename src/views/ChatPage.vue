@@ -14,14 +14,15 @@
                class="popupBox">
       <div class="popupBox_Title">聊天记录</div>
       <div class="popupBox_InfoBox">
-        <div class="popupBox_InfoItem" v-for="(item, index) in infoLists" :key="index" @click="GoDataPage(item._id)">
-          <div class="popupBox_InfoItem_FirstLine">
+        <div v-for="(item, index) in infoLists" :key="index" @click="GoDataPage(item._id)">
+          <div v-if="item.infoListItem && item.infoListItem.length > 0" class="popupBox_InfoItem_FirstLine">
             <div class="popupBox_InfoItem_Title">童年印象</div>
-            <div class="popupBox_InfoItem_Time">{{truncatedTime(item.time,0,11)}}</div>
+            <div class="popupBox_InfoItem_Time">{{truncatedTime(item.time, 0, 11)}}</div>
           </div>
-          <div class="popupBox_InfoItem_Text popupBox_InfoItem_inText">{{item.infoListItem[0].data}}</div>
-          <div class="popupBox_InfoItem_Text">{{item.infoListItem[1].data}}</div>
+          <div v-if="item.infoListItem && item.infoListItem[0]" class="popupBox_InfoItem_Text popupBox_InfoItem_inText">{{item.infoListItem[0].content}}</div>
+          <div v-if="item.infoListItem && item.infoListItem[1]" class="popupBox_InfoItem_Text">{{item.infoListItem[1].content}}</div>
         </div>
+
       </div>
     </van-popup>
 
@@ -38,9 +39,9 @@
              :key="index"
              style="overflow-y: scroll;">
 
-          <div class="DataItemBox" :class="{ 'align-right': item.id === 1, 'align-left': item.id === 2 }">
-            <div :class="{ 'DataItem1': item.id === 1, 'DataItem2': item.id === 2 }">
-              {{ item.data }}
+          <div class="DataItemBox" :class="{ 'align-right': item.role === 'user', 'align-left': item.role === 'assistant' }">
+            <div :class="{ 'DataItem1': item.role === 'user', 'DataItem2': item.role === 'assistant' }">
+              {{ item.content }}
             </div>
           </div>
         </div>
@@ -113,7 +114,10 @@
 <script>
 // import axios from "axios";
 import Vue from "vue";
-import {Toast} from "vant";
+import {Dialog, Toast} from "vant";
+import Cookies from "js-cookie";
+import {v4 as uuidv4} from 'uuid';
+import CryptoJS from 'crypto-js';
 
 export default {
   name: 'ChatPage',
@@ -133,6 +137,9 @@ export default {
       newText: "",  //机器返回的语言
       isPull: false,  //检测是否下拉刷新
       show: false,
+      token: "",
+      signature: null,
+      isLogin: true  //判断当前token是否合法
     }
   },
 
@@ -147,13 +154,186 @@ export default {
 
     this.id = this.$route.query.id
 
+    // 获取token值
+    this.token = Cookies.get('token')
+
     // 如果是编辑部传来的，有id，则获取该id对应的信息放到infoList中
     if (this.id) {
       this.getIdInfo();
     }
   },
-
   methods: {
+    pressButton() {
+      if (!this.istext) {
+        this.istext = true
+      }
+      this.isPressed = true;
+      const unixTimestamp = Math.floor(new Date().getTime() / 1000);
+      const expiredTimestamp = unixTimestamp + 50 * 24 * 60 * 60; // 50 天后的时间戳
+      const uuid = uuidv4();
+      const nonce = this.generateRandomInteger();
+      const secretId = 'AKIDqolWFxgL9ta9leRQI6mLmGf9aCykgkjm';
+      const secretKey = 'IjKqFZ0Pjy8DFJMSXZQBykR7iHk9Tk4M';
+
+      // 所有参数按字典序排序
+      const params = {
+        engine_model_type: '16k_zh',
+        expired: expiredTimestamp,
+        needvad: 1,
+        nonce: nonce,
+        secretid: secretId,
+        timestamp: unixTimestamp,
+        voice_format: 1,
+        voice_id: uuid
+      };
+
+      // 拼接签名原文
+      const sortedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
+      const signatureOriginal = `asr.cloud.tencent.com/asr/v2/1324680690?${sortedParams}`;
+
+      // 使用 SecretKey 进行 HMAC-SHA1 加密，并进行 Base64 编码
+      const signature = CryptoJS.HmacSHA1(signatureOriginal, secretKey);
+      const signatureBase64 = CryptoJS.enc.Base64.stringify(signature);
+
+      // 拼接 WebSocket URL
+      const url = `wss://asr.cloud.tencent.com/asr/v2/1324680690?${sortedParams}&signature=${encodeURIComponent(signatureBase64)}`;
+
+      try {
+        this.signature = new WebSocket(url);
+
+        this.signature.onopen = () => {
+          console.log('WebSocket 连接已建立');
+        };
+
+        this.signature.onmessage = (event) => {
+          console.log(JSON.parse(event.data))
+          // if (JSON.parse(event.data).voice_id) {
+          //   this.voiceId = encodeURIComponent(JSON.parse(event.data).voice_id)
+          // }
+          Toast(event.data)
+        };
+
+        this.signature.onclose = () => {
+          console.log('WebSocket 连接已关闭');
+        };
+
+        this.signature.onerror = (error) => {
+          console.error('WebSocket 发生错误：', error);
+        };
+      } catch (error) {
+        console.error('WebSocket 连接失败：', error);
+      }
+    },
+    // 生成随机正整数，最大不超过10位
+    generateRandomInteger() {
+      const maxDigits = 10;
+      return Math.floor(Math.random() * (Math.pow(10, maxDigits) - 1)) + 1;
+    },
+    // 处理翻译功能的逻辑
+    handleTranslate() {
+      const dataitem = this.$data.text;
+      const newItem = {
+        role: "user",
+        content: dataitem
+      };
+      this.newText = ""  //在生成新的前，先清空之前的对话
+      this.$data.text = "";
+      this.istext = false;
+      this.scrollToBottom();
+      this.infoList.push(newItem);
+      const userid = localStorage.getItem('user_id')
+
+      fetch('http://192.168.4.1:5010/chat/text?token=' + this.token, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;utf-8'
+        },
+        body: JSON.stringify({
+          user_id: userid,
+          topic_name: "童年印象",
+          topic_type: "standard_topic",
+          chat_id: "01",
+          conv_history: this.infoList
+        })
+      })
+          .then(response => {
+            Toast.loading({
+              message: '正在生成',
+              duration: 0,
+              forbidClick: true
+            });
+
+            const newItem = {
+              role: "assistant",
+              content: ""
+            };
+            this.infoList.push(newItem);
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let textAccumulator = '';  // 用于累积文本
+
+            reader.read().then(function process({ done, value }) {
+              if (done) {
+                Toast.clear();
+                return;
+              }
+
+              const decodedValue = decoder.decode(value, { stream: true });
+              textAccumulator += decodedValue;
+
+              // 移除 "data: " 前缀（假设存在），并根据换行符拆分
+              const responseArray = textAccumulator.split('\n');
+
+              responseArray.forEach(item => {
+                if (item.trim() !== "" && item.trim() !== "null") {
+                  try {
+                    // 移除前面的 "data: " 部分（如果有）
+                    const jsonString = item.replace(/^data:\s*/, '');
+                    const parsedItem = JSON.parse(jsonString);
+
+                    if (parsedItem.text) {
+                      // 解析 JSON 数组并将其拼接成字符串
+                      const textArray = JSON.parse(parsedItem.text);
+                      // 更新内容
+                      this.newText = textArray.join('');
+                      this.infoList[this.infoList.length - 1].content = textArray.join('');
+
+                      this.$forceUpdate();  // 强制 Vue 更新 UI
+                    }
+                  } catch (error) {
+                    // console.error("Failed to parse item:", item.trim(), error);
+                    // 处理不能被解析为 JSON 格式的 item
+                  }
+                }
+              });
+
+              // 继续读取
+              return reader.read().then(process.bind(this));
+            }.bind(this));
+          })
+          .catch(error => {
+            console.error(error);
+            // 当前token不合法，所以修改状态
+            this.isLogin = false
+            Dialog.confirm({
+              message: '登录已失效，请重新登录！',
+            })
+                .then(() => {
+                  this.$router.push("/login")
+                })
+                .catch(() => {
+                  // on cancel
+                });
+
+            Toast.clear();  // 清除加载提示
+          });
+
+    },
+
+    // 获取聊天开场语
+    getTextInit() {
+    },
     GoDataPage(id) {
       this.$router.push({
         path: "/datapage",
@@ -244,34 +424,31 @@ export default {
     },
 
     // 按下语音按钮
-    pressButton() {
-      if (!this.istext) {
-        this.istext = true
-      }
-      this.isPressed = true;
-      // this.istext = true;
-      if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        this.recognition.lang = 'zh-CN'; // 设置语言为汉语
-        this.recognition.interimResults = true; // 启用中间结果
-        this.recognition.continuous = true; // 持续识别
-
-        this.recognition.onresult = (event) => {
-          this.$data.text = event.results[event.results.length - 1][0].transcript;
-          for (let i = 0; i < event.results.length; i++) {
-            console.log(event.results[i][0].transcript);
-          }
-        };
-
-        this.recognition.onend = () => {
-          console.log("结束");
-        };
-      } else {
-        console.error('SpeechRecognition is not supported in this browser.');
-      }
-
-      this.recognition.start();
-    },
+    // pressButton() {
+    //
+    //   // this.istext = true;
+    //   if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+    //     this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    //     this.recognition.lang = 'zh-CN'; // 设置语言为汉语
+    //     this.recognition.interimResults = true; // 启用中间结果
+    //     this.recognition.continuous = true; // 持续识别
+    //
+    //     this.recognition.onresult = (event) => {
+    //       this.$data.text = event.results[event.results.length - 1][0].transcript;
+    //       for (let i = 0; i < event.results.length; i++) {
+    //         console.log(event.results[i][0].transcript);
+    //       }
+    //     };
+    //
+    //     this.recognition.onend = () => {
+    //       console.log("结束");
+    //     };
+    //   } else {
+    //     console.error('SpeechRecognition is not supported in this browser.');
+    //   }
+    //
+    //   this.recognition.start();
+    // },
 
     // 松开语音按钮
     releaseButton() {
@@ -320,89 +497,16 @@ export default {
       }
     },
 
-    // 处理翻译功能的逻辑
-    handleTranslate() {
-      const dataitem = this.$data.text;
-      const newItem = {
-        id: 1,
-        data: dataitem
-      };
-      this.newText = ""  //在生成新的前，先清空之前的对话
-      this.$data.text = "";
-      this.istext = false;
-      this.scrollToBottom();
-      this.infoList.push(newItem);
-
-      fetch('http://39.107.54.246/v1/chat-messages', {
-        method: 'POST',
-        headers: {
-          "Authorization": "Bearer app-g5IfxXzOvdq0IqLHptr8CroV",
-          "Content-Type": "application/json;charset=utf-8"
-        },
-        body: JSON.stringify({
-          inputs: {},
-          query: dataitem,
-          response_mode: "streaming",
-          conversation_id: "",
-          user: "abc-123"
-        })
-      })
-          .then(response => {
-            Toast.loading({
-              message: '正在生成',
-              duration: 0,
-              forbidClick: true
-            })
-            const newItem = {
-              id: 2,
-              data: ""
-            };
-            this.infoList.push(newItem);
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-
-            reader.read().then(function processText({ done, value }) {
-              if (done) {
-                Toast.clear();
-                return;
-              }
-              let decodedValue = decoder.decode(value, { stream: true });
-              const jsonString = decodedValue.replace(/data: \s*/g, '');
-              let responseArray = jsonString.split('\n');
-              responseArray.forEach(item => {
-                if (item.trim() !== "" && item.trim() !== "null") {
-                  try {
-                    const parsedItem = JSON.parse(item.trim());
-                    if (parsedItem.answer) {
-                      this.infoList[this.infoList.length - 1].data += parsedItem.answer;
-                      this.newText += parsedItem.answer;
-                    }
-                  } catch (error) {
-                    console.error("Failed to parse item:", item.trim(), error);
-                    // 处理不能被解析为 JSON 格式的 item
-                  }
-                }
-              });
-              this.scrollToBottom();
-
-              // 继续读取
-              return reader.read().then(processText.bind(this));
-            }.bind(this));
-          })
-          .catch(error => {
-            console.error(error);
-          });
-    }
-
   },
 
   beforeDestroy() {
-
-    // 如果当前的infoList长度和刚进入页面时的长度不一致则执行
-
-    if (this.infoList.length !== this.infoNum) {
+    // 如果当前的infoList长度和刚进入页面时的长度不一致，且当前token合法则执行
+    if (this.infoList.length !== this.infoNum && this.isLogin) {
       this.saveInfoToCache();
+    }
+
+    if (this.signature) {
+      this.signature.close();
     }
 
   }

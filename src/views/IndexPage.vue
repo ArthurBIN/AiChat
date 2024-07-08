@@ -68,7 +68,7 @@
                   <div>{{truncatedTime(item.time,0,11)}}</div>
                   <div>{{truncatedTime(item.time,12,17)}}</div>
                 </div>
-                <div class="infoItemBox_Data">{{item.infoListItem[0].data}}</div>
+                <div class="infoItemBox_Data">{{item.infoListItem[0].content}}</div>
                 <div class="iconfont icon-tiaozhuan infoItemBox_Icon"></div>
               </div>
               <van-empty description="您还没有记录哦~" v-if="infoLists.length === 0"/>
@@ -114,9 +114,9 @@
 <!--    </div>-->
 
 <!--    编辑部清空-->
-<!--    <div class="DelBox" v-if="currentSlide === 2" @click="DelAll">-->
-<!--      <van-icon name="delete-o" />-->
-<!--    </div>-->
+    <div class="DelBox" v-if="currentSlide === 2" @click="DelAll">
+      <van-icon name="delete-o" />
+    </div>
 
 <!--    藏卷馆底部按钮-->
 <!--    <div class="AddBox" v-if="currentSlide === 3" @click="ToActivity">-->

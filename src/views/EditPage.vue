@@ -5,7 +5,7 @@
 <!--    对话记录详情，不可编辑-->
     <div class="DialogBox">
       <div class="DialogBox_Item" v-for="item in dataList" :key="item.id">
-        {{item.data}}
+        {{item.content}}
       </div>
     </div>
 
@@ -128,7 +128,7 @@ export default {
     releaseGenerateButton() {
       this.isGeneratePressed = false
       this.dataList.forEach(item => {
-        this.draftText += item.data;
+        this.draftText += item.content;
       })
     },
     //按下保存草稿按钮

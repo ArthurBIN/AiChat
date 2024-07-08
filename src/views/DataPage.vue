@@ -19,10 +19,10 @@
            style="overflow-y: scroll;">
 
         <div class="DataItemBox"
-             :class="{ 'align-right': item.id === 1, 'align-left': item.id === 2 }"
+             :class="{ 'align-right': item.role === 'user', 'align-left': item.role === 'assistant' }"
         >
-          <div :class="{ 'DataItem1': item.id === 1, 'DataItem2': item.id === 2 }"
-          >{{item.data}}</div>
+          <div :class="{ 'DataItem1': item.role === 'user', 'DataItem2': item.role === 'assistant' }"
+          >{{item.content}}</div>
         </div>
 
       </div>

@@ -49,6 +49,7 @@
 <script>
 import {Toast} from "vant";
 import myaxios from "@/config/myaxios";
+import Cookies from 'js-cookie';
 
 export default {
   name: "LoginPage",
@@ -90,7 +91,8 @@ export default {
             localStorage.setItem('user_id', id)
 
             const token = res.data.data.token
-            localStorage.setItem('token', token)
+            Cookies.set('token', token, { expires: 365 });
+            console.log(Cookies.get('token'))
 
             Toast("登录成功！");
             // 跳转到首页
