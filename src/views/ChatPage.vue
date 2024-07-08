@@ -172,8 +172,7 @@ export default {
       const expiredTimestamp = unixTimestamp + 50 * 24 * 60 * 60; // 50 天后的时间戳
       const uuid = uuidv4();
       const nonce = this.generateRandomInteger();
-      const secretId = 'AKIDqolWFxgL9ta9leRQI6mLmGf9aCykgkjm';
-      const secretKey = 'IjKqFZ0Pjy8DFJMSXZQBykR7iHk9Tk4M';
+
 
       // 所有参数按字典序排序
       const params = {
