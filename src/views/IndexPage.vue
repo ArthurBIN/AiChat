@@ -50,6 +50,7 @@
                     ((index + 1) % 4 === 1 || (index + 1) % 4 === 0) ? 'talkBoxItemLeft' : 'talkBoxItemRight',
                     index === activeIndex && isPressed ? 'small' : ''
                  ]" >
+              <div class="talkBoxItem_Text">{{item.num}}</div>
               <div class="talkBoxItem_Text">{{item.text}}</div>
             </div>
 
@@ -150,32 +151,54 @@ export default {
       isLoading: false,
       TalkBoxBgi: [
         {
+          num: "第一篇",
           text: "童年印象",
-          bgi: "https://img.zcool.cn/community/0125e15e4fe442a8012165182e7572.jpg@1280w_1l_2o_100sh.jpg"
+          bgi: "https://s21.ax1x.com/2024/06/29/pkcEOsg.png"
         },
         {
-          text: "儿时玩伴",
-          bgi: "https://img.zcool.cn/community/01c79f5d9f3084a801211d533875a0.jpg@3000w_1l_2o_100sh.jpg"
-        },
-        {
+          num: "第二篇",
+          text: "童年玩伴",
+          bgi: "https://s21.ax1x.com/2024/06/29/pkcV3Oe.png"
+        },{
+          num: "第三篇",
           text: "家庭记忆",
-          bgi: "https://img.zcool.cn/community/01830862b98eb90002c313f7c9d4a3.jpg?x-oss-process=image/auto-orient,1/resize,m_lfit,w_1280,limit_1/sharpen,100"
-        },
-        {
-          text: "童年印象",
-          bgi: "https://img.zcool.cn/community/0125e15e4fe442a8012165182e7572.jpg@1280w_1l_2o_100sh.jpg"
-        },
-        {
-          text: "儿时玩伴",
-          bgi: "https://img.zcool.cn/community/01c79f5d9f3084a801211d533875a0.jpg@3000w_1l_2o_100sh.jpg"
-        },
-        {
-          text: "家庭记忆",
-          bgi: "https://img.zcool.cn/community/01830862b98eb90002c313f7c9d4a3.jpg?x-oss-process=image/auto-orient,1/resize,m_lfit,w_1280,limit_1/sharpen,100"
-        },
-        {
-          text: "家庭记忆",
-          bgi: "https://img.zcool.cn/community/01da0a5e6db913a801216518b5ee6b.jpg@2o.jpg"
+          bgi: "https://s21.ax1x.com/2024/06/29/pkcVGeH.png"
+        },{
+          num: "第四篇",
+          text: "教育启蒙",
+          bgi: "https://s21.ax1x.com/2024/06/30/pkcKLhd.png"
+        },{
+          num: "第五篇",
+          text: "邻里乡情",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801d06f4086.png"
+        },{
+          num: "第六篇",
+          text: "青春友谊",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801d3c93c78.png"
+        },{
+          num: "第七篇",
+          text: "学生时代",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801e1232d09.png"
+        },{
+          num: "第八篇",
+          text: "职场启程",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801e3b18825.png"
+        },{
+          num: "第九篇",
+          text: "结婚成家",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801ed8ab3ed.png"
+        },{
+          num: "第十篇",
+          text: "养育儿女",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801f0bbfa45.png"
+        },{
+          num: "第十一篇",
+          text: "人生转折",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801f1b9d945.png"
+        },{
+          num: "第十二篇",
+          text: "事业成就",
+          bgi: "https://img.picui.cn/free/2024/06/29/66801f2b3fd95.png"
         }
       ]
     }
@@ -442,8 +465,6 @@ export default {
 }
 .talkBoxItem_Text {
   position: absolute;
-  top: 2vw;
-  left: 2.5vw;
   color: white;
   font-size: 6vw;
   font-weight: 700;
@@ -452,7 +473,14 @@ export default {
   -ms-user-select: none;
   user-select: none;
 }
-
+.talkBoxItem_Text:nth-child(1) {
+  top: 2vw;
+  left: 2.5vw;
+}
+.talkBoxItem_Text:nth-child(2) {
+  top: 9vw;
+  left: 2.5vw;
+}
 /*添加按钮*/
 .AddBox {
   position: fixed;

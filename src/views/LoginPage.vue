@@ -117,6 +117,7 @@ export default {
   height: calc(100vh - 60px);
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 .bgiBox {
   width: 100%;

@@ -165,7 +165,7 @@ export default {
   methods: {
     pressButton() {
       if (!this.istext) {
-        this.istext = true
+        this.istext = true;
       }
       this.isPressed = true;
       const unixTimestamp = Math.floor(new Date().getTime() / 1000);
@@ -203,14 +203,12 @@ export default {
 
         this.signature.onopen = () => {
           console.log('WebSocket 连接已建立');
+          this.startSendingAudio();
         };
 
         this.signature.onmessage = (event) => {
-          console.log(JSON.parse(event.data))
-          // if (JSON.parse(event.data).voice_id) {
-          //   this.voiceId = encodeURIComponent(JSON.parse(event.data).voice_id)
-          // }
-          Toast(event.data)
+          console.log(JSON.parse(event.data));
+          Toast(event.data);
         };
 
         this.signature.onclose = () => {
@@ -224,6 +222,39 @@ export default {
         console.error('WebSocket 连接失败：', error);
       }
     },
+
+    startSendingAudio() {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(stream => {
+            const mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start(40); // 每40ms分段
+
+            mediaRecorder.ondataavailable = (event) => {
+              if (this.signature.readyState === WebSocket.OPEN) {
+                this.signature.send(event.data);
+              }
+            };
+
+            mediaRecorder.onstop = () => {
+              if (this.signature.readyState === WebSocket.OPEN) {
+                this.signature.send(JSON.stringify({ type: 'end' }));
+              }
+            };
+
+            this.mediaRecorder = mediaRecorder;
+          })
+          .catch(error => {
+            console.error('获取用户媒体失败：', error);
+          });
+    },
+
+    stopSendingAudio() {
+      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+        this.mediaRecorder.stop();
+      }
+    },
+
+
     // 生成随机正整数，最大不超过10位
     generateRandomInteger() {
       const maxDigits = 10;
