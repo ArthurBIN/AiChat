@@ -60,6 +60,17 @@
       </div>
     </van-pull-refresh>
 
+    <!--    语音识别动画-->
+    <div class="container" v-if="isPressed">
+      <div class="Link">
+        <i class="icon-a-6Ahuatong iconfont"></i>
+      </div>
+      <div class='circle'></div>
+      <div class='circle'></div>
+      <div class='circle'></div>
+      <div class='circle'></div>
+    </div>
+
     <!--    按住说话按钮-->
     <div class="speakBigBox" v-if="!isPull">
 
@@ -118,6 +129,7 @@ import {Dialog, Toast} from "vant";
 import Cookies from "js-cookie";
 import {v4 as uuidv4} from 'uuid';
 import CryptoJS from 'crypto-js';
+import axios from "axios";
 
 export default {
   name: 'ChatPage',
@@ -144,7 +156,8 @@ export default {
       mediaRecorder: null,  //语音识别
       audioContext: null,
       mediaStreamSource: null,
-      scriptProcessor: null
+      scriptProcessor: null,
+      signatureText: "89a5200f1a8487b64d1f123836b7f4788cf9495e"
     }
   },
   computed: {
@@ -177,8 +190,41 @@ export default {
     if (this.id) {
       this.getIdInfo();
     }
+
+    // 测试文字转语音
+    // this.synthesizeSpeech()
   },
   methods: {
+
+    // 语音合成
+    async synthesizeSpeech() {
+      const uuid = uuidv4();
+      const params = {
+        Action: 'TextToVoice',
+        Version: '2019-08-23',
+        Region: 'ap-guangzhou',
+        Timestamp: Math.floor(Date.now() / 1000),
+        Nonce: Math.floor(Math.random() * 10000),
+        SecretId: "AKIDJZjgvxsbCaml6Nes3JYs4A9ujQvCG6zo",
+        Text: '你好，欢迎使用腾讯云语音合成服务',
+        SessionId: uuid,
+        VoiceType: 0,
+        Signature: this.signatureText, // 使用已生成的签名
+      };
+
+      try {
+        const response = await axios.post('https://tts.tencentcloudapi.com/', params, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        console.log(response.data);
+      } catch (error) {
+        console.error('语音合成失败', error);
+      }
+    },
+
+    // 按下说话按钮
     pressButton() {
       if (!this.istext) {
         this.istext = true;
@@ -207,6 +253,7 @@ export default {
 
       const signature = CryptoJS.HmacSHA1(signatureOriginal, secretKey);
       const signatureBase64 = CryptoJS.enc.Base64.stringify(signature);
+      console.log("生成的签名：" + signature)
 
       const url = `wss://asr.cloud.tencent.com/asr/v2/1324680690?${sortedParams}&signature=${encodeURIComponent(signatureBase64)}`;
 
@@ -245,6 +292,7 @@ export default {
         };
       } catch (error) {
         console.error('WebSocket connection failed:', error);
+        Toast.fail("启动语音失败！")
       }
     },
     startSendingAudio() {
@@ -253,7 +301,7 @@ export default {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream);
 
-            const desiredSampleRate = 16000; // 假设目标采样率为16kHz
+            const desiredSampleRate = 16000;
             this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
 
             this.scriptProcessor.onaudioprocess = (event) => {
@@ -275,6 +323,8 @@ export default {
           })
           .catch(error => {
             console.error('获取用户媒体失败:', error);
+            Toast.fail("获取用户媒体失败！")
+            this.releaseButton()
           });
     },
     resample(inputData, sourceSampleRate, targetSampleRate) {
@@ -438,9 +488,13 @@ export default {
     truncatedTime(time,n,x) {
       return time.substring(n, x);
     },
+
+    // 展示弹出层
     showPopup() {
       this.show = true;
     },
+
+    // 下拉刷新
     onRefresh() {
       setTimeout(() => {
         Toast('刷新成功');
@@ -453,9 +507,11 @@ export default {
         }
       }, 1000);
     },
+
     BackToChat() {
       this.isPull = false
     },
+
     getIdInfo() {
       const parsedId = parseInt(this.id);
       this.infoList = this.infoLists.find(item => item._id === parsedId).infoListItem;
@@ -514,35 +570,6 @@ export default {
         console.log('没有找到缓存数据');
       }
     },
-
-    // 按下语音按钮
-    // pressButton() {
-    //
-    //   // this.istext = true;
-    //   if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-    //     this.recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    //     this.recognition.lang = 'zh-CN'; // 设置语言为汉语
-    //     this.recognition.interimResults = true; // 启用中间结果
-    //     this.recognition.continuous = true; // 持续识别
-    //
-    //     this.recognition.onresult = (event) => {
-    //       this.$data.text = event.results[event.results.length - 1][0].transcript;
-    //       for (let i = 0; i < event.results.length; i++) {
-    //         console.log(event.results[i][0].transcript);
-    //       }
-    //     };
-    //
-    //     this.recognition.onend = () => {
-    //       console.log("结束");
-    //     };
-    //   } else {
-    //     console.error('SpeechRecognition is not supported in this browser.');
-    //   }
-    //
-    //   this.recognition.start();
-    // },
-
-
 
     // 按下键盘按钮
     pressJpButton() {
@@ -840,4 +867,60 @@ export default {
   border-radius: 30px;
   background-color: #80A281;
 }
+
+/*打开语音识别*/
+.container{
+  margin: 0 auto;
+  width: 80px;
+  height: 80px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 999;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.circle{
+  position:absolute;
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background-color:rgb(28, 230, 179);
+}
+
+.circle:nth-child(2){
+  animation:anim 3s linear infinite;
+}
+
+.circle:nth-child(3){
+  animation:anim 3s linear 0.8s infinite;
+}
+
+.circle:nth-child(4){
+  animation:anim 3s linear 1.6s infinite;
+}
+.Link {
+  position: absolute;
+  z-index: 999;
+  color: #fff;
+  font-size: 25px;
+}
+@keyframes anim {
+  0% {
+    opacity: 1;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3);
+  }
+}
+
 </style>

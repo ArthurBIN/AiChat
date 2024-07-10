@@ -120,9 +120,9 @@ body {
 
 @font-face {
   font-family: "iconfont"; /* Project id 4579859 */
-  src: url('//at.alicdn.com/t/c/font_4579859_295zfny8u5m.woff2?t=1719298438984') format('woff2'),
-  url('//at.alicdn.com/t/c/font_4579859_295zfny8u5m.woff?t=1719298438984') format('woff'),
-  url('//at.alicdn.com/t/c/font_4579859_295zfny8u5m.ttf?t=1719298438984') format('truetype');
+  src: url('//at.alicdn.com/t/c/font_4579859_a3zmlhbfwr5.woff2?t=1720581216396') format('woff2'),
+  url('//at.alicdn.com/t/c/font_4579859_a3zmlhbfwr5.woff?t=1720581216396') format('woff'),
+  url('//at.alicdn.com/t/c/font_4579859_a3zmlhbfwr5.ttf?t=1720581216396') format('truetype');
 }
 
 .iconfont {
@@ -130,6 +130,10 @@ body {
   font-style: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-a-6Ahuatong:before {
+  content: "\e671";
 }
 
 .icon-baocun:before {
