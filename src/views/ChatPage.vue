@@ -102,7 +102,7 @@
           按住说话
         </div>
         <div class="faSong"
-             :style="text ? { backgroundColor: '#4fabe5' } : { backgroundColor: 'gray' }"
+             :style="combinedText ? { backgroundColor: '#4fabe5' } : { backgroundColor: 'gray' }"
              @touchstart.stop="pressFsButton"
              @touchend.stop="releaseFsButton"
              :class="{ 'small': isFsPressed }"
@@ -185,6 +185,7 @@ export default {
 
     // 获取token值
     this.token = Cookies.get('token')
+    console.log(this.token)
 
     // 如果是编辑部传来的，有id，则获取该id对应的信息放到infoList中
     if (this.id) {
@@ -365,7 +366,6 @@ export default {
       }
     },
 
-
     // 生成随机正整数，最大不超过10位
     generateRandomInteger() {
       const maxDigits = 10;
@@ -373,13 +373,14 @@ export default {
     },
     // 处理翻译功能的逻辑
     handleTranslate() {
-      const dataitem = this.$data.text;
+      const dataitem = this.combinedText;
+      console.log(dataitem)
       const newItem = {
         role: "user",
         content: dataitem
       };
       this.newText = ""  //在生成新的前，先清空之前的对话
-      this.$data.text = "";
+      this.combinedText = "";
       this.istext = false;
       this.scrollToBottom();
       this.infoList.push(newItem);
@@ -585,14 +586,14 @@ export default {
 
     // 按下发送按钮
     pressFsButton() {
-      if (this.text) {
+      if (this.combinedText) {
         this.isFsPressed = true;
       }
     },
 
     // 松开发送按钮
     releaseFsButton() {
-      if (this.text) {
+      if (this.combinedText) {
         this.isFsPressed = false;
         this.handleTranslate();
 
