@@ -6,7 +6,7 @@
 
 <!--      返回首页-->
       <div v-if="$route.path !== '/login'
-              && $route.path !== '/register' 
+              && $route.path !== '/register'
               && $route.path !== '/'
               && $route.path !== '/editstory' "
           class="topIcon iconfont icon-a-037_zhuye32"

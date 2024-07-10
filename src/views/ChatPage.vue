@@ -66,7 +66,7 @@
       <!--      文本框-->
       <textarea class="speakText"
                 v-if="istext"
-                v-model="text">
+                v-model="combinedText">
 
       </textarea>
 
@@ -128,6 +128,7 @@ export default {
       isFsPressed: false,  //发送按钮的状态
       istext: false,   //输入框的状态
       text: "",  //输入框中的数据
+      tempText: "",  //输入框中动态变化的数据
       recognition: null,  //处理语音识别
       infoList: [],  //但钱页面聊天内容
       infoLists: [],  //缓存中的所有聊天内容
@@ -139,10 +140,25 @@ export default {
       show: false,
       token: "",
       signature: null,
-      isLogin: true  //判断当前token是否合法
+      isLogin: true,  //判断当前token是否合法
+      mediaRecorder: null,  //语音识别
+      audioContext: null,
+      mediaStreamSource: null,
+      scriptProcessor: null
     }
   },
-
+  computed: {
+    combinedText: {
+      get() {
+        return this.text + this.tempText;
+      },
+      set(value) {
+        const lengthOfText = this.text.length;
+        this.text = value.substring(0, lengthOfText);
+        this.tempText = value.substring(lengthOfText);
+      },
+    },
+  },
   mounted() {
     console.log(this.user_id)
     // localStorage.removeItem('infoLists');
@@ -169,13 +185,12 @@ export default {
       }
       this.isPressed = true;
       const unixTimestamp = Math.floor(new Date().getTime() / 1000);
-      const expiredTimestamp = unixTimestamp + 50 * 24 * 60 * 60; // 50 天后的时间戳
+      const expiredTimestamp = unixTimestamp + 50 * 24 * 60 * 60;
       const uuid = uuidv4();
       const nonce = this.generateRandomInteger();
       const secretId = 'AKIDqolWFxgL9ta9leRQI6mLmGf9aCykgkjm';
       const secretKey = 'IjKqFZ0Pjy8DFJMSXZQBykR7iHk9Tk4M';
 
-      // 所有参数按字典序排序
       const params = {
         engine_model_type: '16k_zh',
         expired: expiredTimestamp,
@@ -187,70 +202,116 @@ export default {
         voice_id: uuid
       };
 
-      // 拼接签名原文
       const sortedParams = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
       const signatureOriginal = `asr.cloud.tencent.com/asr/v2/1324680690?${sortedParams}`;
 
-      // 使用 SecretKey 进行 HMAC-SHA1 加密，并进行 Base64 编码
       const signature = CryptoJS.HmacSHA1(signatureOriginal, secretKey);
       const signatureBase64 = CryptoJS.enc.Base64.stringify(signature);
 
-      // 拼接 WebSocket URL
       const url = `wss://asr.cloud.tencent.com/asr/v2/1324680690?${sortedParams}&signature=${encodeURIComponent(signatureBase64)}`;
 
       try {
         this.signature = new WebSocket(url);
+        console.log(this.signature);
 
         this.signature.onopen = () => {
-          console.log('WebSocket 连接已建立');
+          console.log('WebSocket连接开启');
           this.startSendingAudio();
         };
 
         this.signature.onmessage = (event) => {
-          console.log(JSON.parse(event.data));
-          Toast(event.data);
+
+          const data = JSON.parse(event.data);
+          if (data.result) {
+            console.log(data.result)
+            if (data.result.slice_type === 0 || data.result.slice_type === 1) {
+              this.tempText = data.result.voice_text_str
+            } else if (data.result.slice_type === 2) {
+              this.tempText = ""
+              this.text += data.result.voice_text_str
+            }
+          }
+
         };
 
         this.signature.onclose = () => {
-          console.log('WebSocket 连接已关闭');
+          console.log('WebSocket连接关闭');
+          this.stopSendingAudio();
         };
 
         this.signature.onerror = (error) => {
-          console.error('WebSocket 发生错误：', error);
+          console.error('WebSocket error:', error);
+          this.stopSendingAudio();
         };
       } catch (error) {
-        console.error('WebSocket 连接失败：', error);
+        console.error('WebSocket connection failed:', error);
       }
     },
-
     startSendingAudio() {
       navigator.mediaDevices.getUserMedia({ audio: true })
           .then(stream => {
-            const mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.start(40); // 每40ms分段
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.mediaStreamSource = this.audioContext.createMediaStreamSource(stream);
 
-            mediaRecorder.ondataavailable = (event) => {
+            const desiredSampleRate = 16000; // 假设目标采样率为16kHz
+            this.scriptProcessor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+            this.scriptProcessor.onaudioprocess = (event) => {
+              const inputData = event.inputBuffer.getChannelData(0);
+              const resampledData = this.resample(inputData, this.audioContext.sampleRate, desiredSampleRate);
+
               if (this.signature.readyState === WebSocket.OPEN) {
-                this.signature.send(event.data);
+                const buffer = new ArrayBuffer(resampledData.length * 2);
+                const view = new DataView(buffer);
+                resampledData.forEach((sample, index) => {
+                  view.setInt16(index * 2, sample * 0x7FFF, true);
+                });
+                this.signature.send(buffer);
               }
             };
 
-            mediaRecorder.onstop = () => {
-              if (this.signature.readyState === WebSocket.OPEN) {
-                this.signature.send(JSON.stringify({ type: 'end' }));
-              }
-            };
-
-            this.mediaRecorder = mediaRecorder;
+            this.mediaStreamSource.connect(this.scriptProcessor);
+            this.scriptProcessor.connect(this.audioContext.destination);
           })
           .catch(error => {
-            console.error('获取用户媒体失败：', error);
+            console.error('获取用户媒体失败:', error);
           });
+    },
+    resample(inputData, sourceSampleRate, targetSampleRate) {
+      const sampleRateRatio = sourceSampleRate / targetSampleRate;
+      const newLength = Math.round(inputData.length / sampleRateRatio);
+      const resampledData = new Float32Array(newLength);
+
+      for (let i = 0; i < newLength; i++) {
+        const originalIndex = i * sampleRateRatio;
+        const lowerIndex = Math.floor(originalIndex);
+        const upperIndex = Math.ceil(originalIndex);
+        const interpolation = originalIndex - lowerIndex;
+        resampledData[i] = inputData[lowerIndex] + (inputData[upperIndex] - inputData[lowerIndex]) * interpolation;
+      }
+
+      return resampledData;
+    },
+    releaseButton() {
+      this.isPressed = false;
+      this.stopSendingAudio();
     },
 
     stopSendingAudio() {
-      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-        this.mediaRecorder.stop();
+      if (this.scriptProcessor) {
+        this.scriptProcessor.disconnect();
+        this.scriptProcessor = null;
+      }
+      if (this.mediaStreamSource) {
+        this.mediaStreamSource.disconnect();
+        this.mediaStreamSource = null;
+      }
+      if (this.audioContext) {
+        this.audioContext.close();
+        this.audioContext = null;
+      }
+      if (this.signature && this.signature.readyState === WebSocket.OPEN) {
+        this.signature.send(JSON.stringify({ type: 'end' }));
       }
     },
 
@@ -481,17 +542,7 @@ export default {
     //   this.recognition.start();
     // },
 
-    // 松开语音按钮
-    releaseButton() {
-      if (this.recognition) {
-        this.recognition.stop();
-        this.recognition = null;
-      }
-      // if (this.text === "") {
-      //   this.istext = false;
-      // }
-      this.isPressed = false;
-    },
+
 
     // 按下键盘按钮
     pressJpButton() {
