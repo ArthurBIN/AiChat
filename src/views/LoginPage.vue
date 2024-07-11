@@ -92,12 +92,14 @@ export default {
 
             const token = res.data.data.token
             Cookies.set('token', token, { expires: 365 });
-            console.log(Cookies.get('token'))
 
             Toast("登录成功！");
             // 跳转到首页
             this.$router.replace({ name: 'index' });
           }
+        }).catch(res => {
+          console.error(res)
+          Toast.fail("登录失败")
         })
       }
 

@@ -18,7 +18,12 @@
     </van-popover>
 
 <!--    问候语-->
-    <div class="greetings">{{greeting}}</div>
+    <div class="greetings">
+      {{greeting}}
+      <router-link to="/voice">
+        <van-button type="primary">主要按钮</van-button>
+      </router-link>
+    </div>
 <!--    标签转化页-->
     <div class="ContentBox">
 
@@ -131,6 +136,8 @@
 <script>
 import Swiper from 'swiper';
 import {Dialog, Toast} from "vant";
+import Cookies from 'js-cookie';
+
 export default {
   name: "IndexPage",
   data() {
@@ -245,6 +252,7 @@ export default {
     onSelect(action) {
       if (action.text === '退出登录') {
         localStorage.removeItem('user_id');
+        Cookies.remove('token')
         Toast("退出登录成功！")
         this.$router.push("/login");
       }

@@ -9,6 +9,7 @@ import LoginPage from "@/views/LoginPage.vue";
 import RegisterPage from "@/views/RegisterPage.vue";
 import EditPage from "@/views/EditPage.vue";
 import EditStoryPage from "@/views/EditStoryPage.vue";
+import VoiceDemo from "@/views/VoiceDemo.vue";
 
 Vue.use(VueRouter)
 
@@ -85,6 +86,15 @@ const routes = [
       title: '时光之语'
     }
   },
+  {
+    path: '/voice',
+    name: 'voice',
+    component: VoiceDemo,
+    meta: {
+      title: '时光之语'
+    }
+  },
+
 
 ]
 

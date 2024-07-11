@@ -38,7 +38,7 @@
            onselectstart="return false;"
            :class="{ 'small': isPressed }"
       >
-        登录
+        注册
       </div>
 
     </div>
@@ -85,20 +85,23 @@ export default {
           mobile: this.mobile
         }
 
-        myaxios.post("/user/register", info).then(res => {
+        myaxios.post("/user/register", info, {
+          withCredentials: true
+        }).then(res => {
           if (res.data.code === 0) {
             const id = res.data.data.user_id
             localStorage.setItem('user_id', id)
 
-            // 3.显示登录成功
-            Toast("登录成功！");
+            // 显示注册成功提示
+            Toast("注册成功！");
+
+            // console.log(res.headers)
+            // // 获取Set-Cookie值
+            // const cookieValue = res.headers['set-cookie'];
+            // console.log(cookieValue);
 
             // 跳转到首页
             this.$router.replace({ name: 'index' });
-
-            // const token = res.data.token
-            // console.log(res.headers['cookie'])
-            // localStorage.setItem('token', token);
           }
         }).catch( err => {
           console.log(err)
