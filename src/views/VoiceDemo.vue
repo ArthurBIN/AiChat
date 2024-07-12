@@ -1,14 +1,13 @@
 <template>
   <div class="All">
-    <van-button type="primary" @click="fetchData">主要按钮</van-button>
-    <audio v-if="audioUrl" :src="audioUrl" controls></audio>
+<!--    <van-button type="primary" @click="fetchData">主要按钮</van-button>-->
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import CryptoJS from 'crypto-js';
-import {v4 as uuidv4} from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 export default {
   name: "VoiceDemo",
@@ -21,11 +20,11 @@ export default {
   },
   methods: {
     async fetchData() {
-      const service = 'cvm';
+      const service = 'tts';
       const host = 'tts.tencentcloudapi.com';
       const region = 'ap-beijing';
-      const action = 'DescribeInstances';
-      const version = '2017-03-12';
+      const action = 'TextToVoice';
+      const version = '2019-08-23';
       const algorithm = 'TC3-HMAC-SHA256';
       const timestamp = Math.floor(Date.now() / 1000);
       const date = new Date(timestamp * 1000).toISOString().substr(0, 10);
@@ -70,6 +69,13 @@ export default {
 
             const audioBase64 = response.data.Response.Audio;
             this.audioUrl = `data:audio/wav;base64,${audioBase64}`;
+
+            const audio = new Audio(this.audioUrl);
+            audio.play();
+
+            audio.onended = () => {
+              this.audioUrl = null;
+            };
           })
           .catch(error => {
             console.error('Error synthesizing voice:', error);

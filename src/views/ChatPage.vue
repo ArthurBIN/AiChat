@@ -55,9 +55,7 @@
       下拉查看历史记录</van-divider>
 
     <van-pull-refresh v-if="!isPull" v-model="isLoading" @refresh="onRefresh" class="NewContentBox" ref="scrollArea">
-      <div class="NewContentBox_Text">
-        {{newText}}
-      </div>
+      <div class="NewContentBox_Text" v-html="newText"></div>
     </van-pull-refresh>
 
     <!--    语音识别动画-->
@@ -130,6 +128,8 @@ import Cookies from "js-cookie";
 import {v4 as uuidv4} from 'uuid';
 import CryptoJS from 'crypto-js';
 import axios from "axios";
+// import axios from "axios";
+
 
 export default {
   name: 'ChatPage',
@@ -148,6 +148,7 @@ export default {
       infoNum: 0,  //编辑部传来数据聊天内容的初始数量
       isLoading: false,
       newText: "",  //机器返回的语言
+      oldText: "",
       isPull: false,  //检测是否下拉刷新
       show: false,
       token: "",
@@ -157,7 +158,12 @@ export default {
       audioContext: null,
       mediaStreamSource: null,
       scriptProcessor: null,
-      signatureText: "89a5200f1a8487b64d1f123836b7f4788cf9495e"
+      audioUrl: null,
+      secretId: 'AKIDJZjgvxsbCaml6Nes3JYs4A9ujQvCG6zo',
+      secretKey: 'w2vqiYClHckhihW80pSvpfO0jRYedZP4',
+      textTest: "",
+      textArr: [],
+      num: 0
     }
   },
   computed: {
@@ -173,10 +179,8 @@ export default {
     },
   },
   mounted() {
-    console.log(this.user_id)
     // localStorage.removeItem('infoLists');
     this.getCachedData();
-    console.log(this.infoLists)
 
     // 滑倒页面最底端
     this.scrollToBottom();
@@ -185,7 +189,6 @@ export default {
 
     // 获取token值
     this.token = Cookies.get('token')
-    console.log(this.token)
 
     // 如果是编辑部传来的，有id，则获取该id对应的信息放到infoList中
     if (this.id) {
@@ -195,36 +198,8 @@ export default {
     // 测试文字转语音
     // this.synthesizeSpeech()
   },
+
   methods: {
-
-    // 语音合成
-    async synthesizeSpeech() {
-      const uuid = uuidv4();
-      const params = {
-        Action: 'TextToVoice',
-        Version: '2019-08-23',
-        Region: 'ap-guangzhou',
-        Timestamp: Math.floor(Date.now() / 1000),
-        Nonce: Math.floor(Math.random() * 10000),
-        SecretId: "AKIDJZjgvxsbCaml6Nes3JYs4A9ujQvCG6zo",
-        Text: '你好，欢迎使用腾讯云语音合成服务',
-        SessionId: uuid,
-        VoiceType: 0,
-        Signature: this.signatureText, // 使用已生成的签名
-      };
-
-      try {
-        const response = await axios.post('https://tts.tencentcloudapi.com/', params, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log(response.data);
-      } catch (error) {
-        console.error('语音合成失败', error);
-      }
-    },
-
     // 按下说话按钮
     pressButton() {
       if (!this.istext) {
@@ -347,7 +322,6 @@ export default {
       this.isPressed = false;
       this.stopSendingAudio();
     },
-
     stopSendingAudio() {
       if (this.scriptProcessor) {
         this.scriptProcessor.disconnect();
@@ -371,108 +345,217 @@ export default {
       const maxDigits = 10;
       return Math.floor(Math.random() * (Math.pow(10, maxDigits) - 1)) + 1;
     },
+
     // 处理翻译功能的逻辑
-    handleTranslate() {
+    async handleTranslate() {
+      Toast.loading({
+        message: '正在生成',
+        duration: 0,
+        forbidClick: true
+      });
+
       const dataitem = this.combinedText;
-      console.log(dataitem)
       const newItem = {
         role: "user",
         content: dataitem
       };
-      this.newText = ""  //在生成新的前，先清空之前的对话
+
+      this.newText = ""; // 在生成新的前，先清空之前的对话
       this.combinedText = "";
+      this.oldText = "";
+      this.textTest = "";
+      this.textArr = [];
       this.istext = false;
       this.scrollToBottom();
       this.infoList.push(newItem);
-      const userid = localStorage.getItem('user_id')
+      const userid = localStorage.getItem('user_id');
 
-      fetch('http://192.168.4.1:5010/chat/text?token=' + this.token, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json;utf-8'
-        },
-        body: JSON.stringify({
-          user_id: userid,
-          topic_name: "童年印象",
-          topic_type: "standard_topic",
-          chat_id: "01",
-          conv_history: this.infoList
-        })
-      })
-          .then(response => {
-            Toast.loading({
-              message: '正在生成',
-              duration: 0,
-              forbidClick: true
-            });
+      try {
+        const response = await fetch('http://192.168.4.1:5010/chat/text?token=' + this.token, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json;utf-8'
+          },
+          body: JSON.stringify({
+            user_id: userid,
+            topic_name: "童年印象",
+            topic_type: "standard_topic",
+            chat_id: "01",
+            conv_history: this.infoList
+          })
+        });
 
-            const newItem = {
-              role: "assistant",
-              content: ""
-            };
-            this.infoList.push(newItem);
+        const newItem = {
+          role: "assistant",
+          content: ""
+        };
+        this.infoList.push(newItem);
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let textAccumulator = '';  // 用于累积文本
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let textAccumulator = ''; // 用于累积文本
 
-            reader.read().then(function process({ done, value }) {
-              if (done) {
-                Toast.clear();
-                return;
-              }
+        const process = async ({ done, value }) => {
+          if (done) {
+            Toast.clear();
+            // this.handleTalk()
+            return;
+          }
 
-              const decodedValue = decoder.decode(value, { stream: true });
-              textAccumulator += decodedValue;
+          const decodedValue = decoder.decode(value, { stream: true });
+          textAccumulator += decodedValue;
 
-              // 移除 "data: " 前缀（假设存在），并根据换行符拆分
-              const responseArray = textAccumulator.split('\n');
+          // 移除 "data: " 前缀（假设存在），并根据换行符拆分
+          const responseArray = textAccumulator.split('\n');
 
-              responseArray.forEach(item => {
-                if (item.trim() !== "" && item.trim() !== "null") {
-                  try {
-                    // 移除前面的 "data: " 部分（如果有）
-                    const jsonString = item.replace(/^data:\s*/, '');
-                    const parsedItem = JSON.parse(jsonString);
+          // 处理responseArray的后端返回的数组，将数组中的text连成一个句子
+          for (const item of responseArray) {
+            if (item.trim() !== "" && item.trim() !== "null") {
+              try {
+                // 移除前面的 "data: " 部分（如果有）
+                const jsonString = item.replace(/^data:\s*/, '');
+                const parsedItem = JSON.parse(jsonString);
+                if (parsedItem.text) {
+                  // 解析 JSON 数组并将其拼接成字符串
+                  const textArray = JSON.parse(parsedItem.text);
+                  const currentText = textArray.join('');
 
-                    if (parsedItem.text) {
-                      // 解析 JSON 数组并将其拼接成字符串
-                      const textArray = JSON.parse(parsedItem.text);
-                      // 更新内容
-                      this.newText = textArray.join('');
-                      this.infoList[this.infoList.length - 1].content = textArray.join('');
-
-                      this.$forceUpdate();  // 强制 Vue 更新 UI
-                    }
-                  } catch (error) {
-                    // console.error("Failed to parse item:", item.trim(), error);
-                    // 处理不能被解析为 JSON 格式的 item
+                  if (currentText.length > this.oldText.length) {
+                    this.oldText = currentText;
                   }
                 }
-              });
+              } catch (error) {
+                // 处理不能被解析为 JSON 格式的 item
+              }
+            }
+          }
 
-              // 继续读取
-              return reader.read().then(process.bind(this));
-            }.bind(this));
-          })
-          .catch(error => {
-            console.error(error);
-            // 当前token不合法，所以修改状态
-            this.isLogin = false
-            Dialog.confirm({
-              message: '登录已失效，请重新登录！',
+          // 得到新数据和旧数据之间的差值
+          this.textTest += this.oldText.split(this.newText).join('');
+
+
+          await this.processChunk(this.textTest);
+
+          // 将处理后的句子中的最长的值赋值给newText和另一个
+          this.newText = this.oldText;
+          this.infoList[this.infoList.length - 1].content = this.oldText;
+
+          // 继续读取
+          const result = await reader.read();
+          await process(result);
+        };
+
+        const initialResult = await reader.read();
+        await process(initialResult);
+
+      } catch (error) {
+        console.error(error);
+        // 当前token不合法，所以修改状态
+        this.isLogin = false;
+        Dialog.confirm({
+          message: '登录已失效，请重新登录！',
+        })
+            .then(() => {
+              this.$router.push("/login");
             })
-                .then(() => {
-                  this.$router.push("/login")
-                })
-                .catch(() => {
-                  // on cancel
-                });
+            .catch(() => {});
 
-            Toast.clear();  // 清除加载提示
-          });
+        Toast.clear(); // 清除加载提示
+      }
+    },
+
+    async handleTalk() {
+      for (let i = 0; i < this.textArr.length; i++) {
+        await this.fetchData(this.textArr[i])
+      }
+    },
+
+    async processChunk(chunk) {
+      // 使用正则表达式分割缓冲区中的数据
+      const sentences = chunk.split(/([。！？])/);
+
+      // 逐句输出
+      for (let i = 0; i < sentences.length; i += 2) {
+        const sentence = sentences[i] + (sentences[i + 1] || ''); // 加上标点符号
+        if ((sentences[i + 1] === '。' || sentences[i + 1] === '！' || sentences[i + 1] === '？') && !this.textArr.includes(sentence)) {
+          this.textArr.push(sentence);
+          console.log(sentence)
+        }
+      }
+      // await this.fetchData(this.textArr[0])
 
     },
+
+    // 语音合成
+    async fetchData(text) {
+      return new Promise((resolve, reject) => {
+        const service = 'tts';
+        const host = 'tts.tencentcloudapi.com';
+        const region = 'ap-beijing';
+        const action = 'TextToVoice';
+        const version = '2019-08-23';
+        const algorithm = 'TC3-HMAC-SHA256';
+        const timestamp = Math.floor(Date.now() / 1000);
+        const date = new Date(timestamp * 1000).toISOString().substr(0, 10);
+        const uuid = uuidv4();
+        const requestPayload = {
+          Text: text,
+          SessionId: uuid,
+          Volume: 1,
+          ProjectId: 0,
+          ModelType: 1,
+          VoiceType: 0,
+          PrimaryLanguage: 1,
+        };
+        const payloadHash = CryptoJS.SHA256(JSON.stringify(requestPayload)).toString();
+
+        const canonicalHeaders = `content-type:application/json\nhost:${host}\n`;
+        const signedHeaders = 'content-type;host';
+        const canonicalRequest = `POST\n/\n\n${canonicalHeaders}\n${signedHeaders}\n${payloadHash}`;
+
+        const credentialScope = `${date}/${service}/tc3_request`;
+        const stringToSign = `${algorithm}\n${timestamp}\n${credentialScope}\n${CryptoJS.SHA256(canonicalRequest).toString()}`;
+
+        const kDate = CryptoJS.HmacSHA256(date, 'TC3' + this.secretKey);
+        const kService = CryptoJS.HmacSHA256(service, kDate);
+        const kSigning = CryptoJS.HmacSHA256('tc3_request', kService);
+        const signature = CryptoJS.HmacSHA256(stringToSign, kSigning).toString();
+
+        const authorization = `${algorithm} Credential=${this.secretId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+        axios.post(`/api`, requestPayload, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-TC-Action': action,
+            'X-TC-Version': version,
+            'X-TC-Timestamp': timestamp,
+            'X-TC-Region': region,
+            'Authorization': authorization,
+          },
+        })
+            .then(response => {
+              Toast("语音被触发" + this.num);
+              this.num++
+              console.log(response.data)
+              const audioBase64 = response.data.Response.Audio;
+              this.audioUrl = `data:audio/wav;base64,${audioBase64}`;
+
+              const audio = new Audio(this.audioUrl);
+              audio.play();
+
+              audio.onended = () => {
+                this.audioUrl = null;
+                resolve(); // 语音播放结束后解析Promise
+              };
+            })
+            .catch(error => {
+              console.error('Error synthesizing voice:', error);
+              reject(error); // 处理错误情况
+            });
+      });
+    },
+
+
+
 
     // 获取聊天开场语
     getTextInit() {

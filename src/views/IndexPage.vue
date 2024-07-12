@@ -20,9 +20,9 @@
 <!--    问候语-->
     <div class="greetings">
       {{greeting}}
-      <router-link to="/voice">
-        <van-button type="primary">主要按钮</van-button>
-      </router-link>
+<!--      <router-link to="/voice">-->
+<!--        <van-button type="primary">主要按钮</van-button>-->
+<!--      </router-link>-->
     </div>
 <!--    标签转化页-->
     <div class="ContentBox">
